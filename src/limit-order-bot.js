@@ -37,7 +37,7 @@ class LimitOrderBot extends TakepileBot {
     // Get open positions from logs
     for (const log of pileLogs) {
       if (log.name == 'LimitOrderSubmitted') {
-        const [who, symbol, amount, collateral, isLong, limitPrice, index, deadline] = log.args;
+        const [who, symbol, amount, collateral, isLong, limitPrice, stopLoss, index, deadline] = log.args;
         if (!(symbol in limitOrderMap)) limitOrderMap[symbol] = {};
         if (!(who in limitOrderMap[symbol])) limitOrderMap[symbol][who] = [];
         limitOrderMap[symbol][who][index.toNumber()] = {
@@ -48,6 +48,7 @@ class LimitOrderBot extends TakepileBot {
           collateral: collateral.toString(),
           isLong: isLong,
           limitPrice: limitPrice.toString(),
+          stopLoss: stopLoss.toString(),
           index: index.toNumber(),
           deadline: new Date(deadline.toNumber() * 1000),
         };
@@ -109,8 +110,6 @@ class LimitOrderBot extends TakepileBot {
           if (new Date().getTime() > order.deadline.getTime()) {
             order.isTriggerable = false;
           }
-          // TODO: there is currently a bug for decrease limit orders, it only specifies takeprofit
-          // so for now just attempting everything
           order.isTriggerable = true;
         }
 
@@ -120,7 +119,6 @@ class LimitOrderBot extends TakepileBot {
         for (const order of limitOrders) {
           if (order.isTriggerable) {
             console.log(`Triggering limit order:`);
-            console.log(`${order.who} ${order.symbol} ${order.index}`);
             const contract = new ethers.Contract(pile.address, TAKEPILE_TOKEN_ABI, this.wallets[0]);
             try {
               await contract.triggerLimitOrder(order.who, order.symbol, order.index);

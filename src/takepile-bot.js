@@ -11,6 +11,8 @@ class TakepileBot extends EventEmitter {
   constructor(config) {
     super();
     this.driverAddress = config.driverAddress;
+    this.gasPrice = config.gasPrice;
+    this.gasLimit = config.gasLimit;
     this.provider = new ethers.providers.JsonRpcProvider(config.rpcUrl);
     this.wallets = config.privateKeys.map((privateKey) => {
       return new ethers.Wallet(privateKey, this.provider);

@@ -6,7 +6,7 @@
   "event Deposit(address indexed,uint256,uint256)",
   "event IncreasePosition(address indexed,string,uint256,uint256,bool,int256,uint256)",
   "event LimitOrderCancelled(address indexed,string,uint256)",
-  "event LimitOrderSubmitted(address indexed,string,uint256,uint256,bool,uint256,uint256,uint256)",
+  "event LimitOrderSubmitted(address indexed,string,uint256,uint256,bool,uint256,uint256,uint256,uint256)",
   "event LimitOrderTriggered(address indexed,string,uint256,address)",
   "event OwnershipTransferred(address indexed,address indexed)",
   "event RemoveMarket(string)",

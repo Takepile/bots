@@ -1,5 +1,4 @@
 
-const EventEmitter = require('events');
 const ethers = require('ethers');
 const TakepileBot = require('./takepile-bot');
 
@@ -120,11 +119,14 @@ class LiquidationBot extends TakepileBot {
         if (liquidatable.length) {
           for (const l of liquidatable) {
             console.log(`Liquidatable!`, JSON.stringify(l));
-            for (const wallet of wallets) {
+            for (const wallet of this.wallets) {
               try {
                 console.log(`Attempting liquidation with ${wallet.address}`);
                 const pileToken = new ethers.Contract(l.pileAddress, TAKEPILE_TOKEN_ABI, wallet);
-                const tx = await pileToken.liquidate(l.who, l.symbol);
+                const tx = await pileToken.liquidate(l.who, l.symbol, {
+                  gasPrice: this.gasPrice,
+                  gasLimit: this.gasLimit,
+                });
                 await tx.wait();
                 console.log(`Success!`);
                 break;
