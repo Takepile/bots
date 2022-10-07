@@ -41,6 +41,7 @@ class LiquidationBot extends TakepileBot {
 
     // Get open positions from logs
     for (const log of pileLogs) {
+      if (!log) continue;
       if (log.name === 'IncreasePosition') {
         const [who, symbol, amount, newAmount, isLong, price, fees] = log.args;
         if (!(symbol in positions)) positions[symbol] = {};
@@ -52,7 +53,9 @@ class LiquidationBot extends TakepileBot {
       } else if (log.name === 'DecreasePosition') {
         const [who, symbol, amount, newAmount, isLong, price, reward, fees] = log.args;
         if (newAmount == 0) {
-          delete positions[symbol][who];
+          if (positions[symbol] && positions[symbol][who]) {
+            delete positions[symbol][who];
+          }
         } else {
           positions[symbol][who] = {
             amount: newAmount.toString(),
@@ -128,7 +131,7 @@ class LiquidationBot extends TakepileBot {
                   gasLimit: this.gasLimit,
                 });
                 await tx.wait();
-                console.log(`Success!`);
+                console.log(`Liquidation triggered successfully!`);
                 break;
               } catch (err) {
                 console.log(`Liquidation failed with ${wallet.address}`);
@@ -139,6 +142,7 @@ class LiquidationBot extends TakepileBot {
         }
       }
     } catch (err) {
+      console.log(err);
       console.log(`Processing liquidations failed: ${err.message}`);
     }
   };

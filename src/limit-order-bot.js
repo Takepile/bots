@@ -121,7 +121,12 @@ class LimitOrderBot extends TakepileBot {
             console.log(`Triggering limit order:`);
             const contract = new ethers.Contract(pile.address, TAKEPILE_TOKEN_ABI, this.wallets[0]);
             try {
-              await contract.triggerLimitOrder(order.who, order.symbol, order.index);
+              const tx = await contract.triggerLimitOrder(order.who, order.symbol, order.index, {
+                gasPrice: this.gasPrice,
+                gasLimit: this.gasLimit,
+              });
+              await tx.wait();
+              console.log(`Limit order triggered successfully`);
             } catch (err) {
               console.log(`Trigger failed:`, err?.error?.reason);
             }

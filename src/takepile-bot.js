@@ -2,9 +2,7 @@
 const EventEmitter = require('events');
 const ethers = require('ethers');
 
-const TAKEPILE_DRIVER_ABI = require('../abi/TakepileDriver.json');
-const TAKEPILE_TOKEN_ABI = require('../abi/TakepileToken.json');
-const LIQUIDATION_PASS_ABI = require('../abi/LiquidationPass.json');
+const TAKEPILE_TOKEN_ABI = require('../abi/TakepileTokenV2.json');
 
 class TakepileBot extends EventEmitter {
 
@@ -13,6 +11,7 @@ class TakepileBot extends EventEmitter {
     this.driverAddress = config.driverAddress;
     this.gasPrice = config.gasPrice;
     this.gasLimit = config.gasLimit;
+    this.takepiles = config.takepiles;
     this.provider = new ethers.providers.JsonRpcProvider(config.rpcUrl);
     this.wallets = config.privateKeys.map((privateKey) => {
       return new ethers.Wallet(privateKey, this.provider);
@@ -55,17 +54,7 @@ class TakepileBot extends EventEmitter {
    * @returns
    */
   async getPiles() {
-    const driver = new ethers.Contract(this.driverAddress, TAKEPILE_DRIVER_ABI, this.provider);
-    const takepileCreatedFilter = driver.filters.TakepileCreated(null, null, null);
-    const takepileCreatedEvents = await driver.queryFilter(takepileCreatedFilter);
-    const takepiles = takepileCreatedEvents.map((e) => {
-      return {
-        address: e.args[0],
-        name: e.args[1],
-        symbol: e.args[2],
-      };
-    });
-    return takepiles;
+    return this.takepiles;
   }
 
 
