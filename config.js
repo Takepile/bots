@@ -13,6 +13,7 @@ module.exports = {
   fromBlock: 47000000,
   gasPrice: 10000000000,
   gasLimit: 9900000,
+  maxTriggerAttempts: 1,
   takepiles: [
     {
       address: "0x9882FBfbC0A632f896B319F76A76a8c6201B7aDC",

@@ -2,10 +2,9 @@
 const EventEmitter = require('events');
 const ethers = require('ethers');
 const TakepileBot = require('./takepile-bot');
+const JsonDB = require('simple-json-db');
 
-const TAKEPILE_DRIVER_ABI = require('../abi/TakepileDriver.json');
 const TAKEPILE_TOKEN_ABI = require('../abi/TakepileToken.json');
-const LIQUIDATION_PASS_ABI = require('../abi/LiquidationPass.json');
 
 class LimitOrderBot extends TakepileBot {
 
@@ -13,6 +12,9 @@ class LimitOrderBot extends TakepileBot {
     super(config);
     this.interval = config.interval;
     this.fromBlock = config.fromBlock;
+    this.maxTriggerAttempts = config.maxTriggerAttempts || 1;
+    this.db = new JsonDB('limit-db.json', {});
+
   }
 
   /**
@@ -110,6 +112,7 @@ class LimitOrderBot extends TakepileBot {
           if (new Date().getTime() > order.deadline.getTime()) {
             order.isTriggerable = false;
           }
+          // order.isTriggerable = order.who !== '0x3cc01c28320c3Babd6F200aB9b61755CBB030317';
           order.isTriggerable = true;
         }
 
@@ -117,18 +120,27 @@ class LimitOrderBot extends TakepileBot {
 
         // Iterate over limit orders and trigger
         for (const order of limitOrders) {
+          const orderId = order.deadline.getTime();
+          const count = JSON.parse(this.db.get(orderId) || 0);
           if (order.isTriggerable) {
-            console.log(`Triggering limit order:`);
             const contract = new ethers.Contract(pile.address, TAKEPILE_TOKEN_ABI, this.wallets[0]);
             try {
-              const tx = await contract.triggerLimitOrder(order.who, order.symbol, order.index, {
-                gasPrice: this.gasPrice,
-                gasLimit: this.gasLimit,
-              });
+              if (count > this.maxTriggerAttempts) {
+                console.log('Exceeds maximum trigger attempt count, skipping');
+                continue;
+              }
+              console.log(`Triggering limit order:`);
+              const tx = await contract.triggerLimitOrder(order.who, order.symbol, order.index,
+                {
+                  gasPrice: this.gasPrice,
+                  gasLimit: this.gasLimit,
+                }
+              );
               await tx.wait();
               console.log(`Limit order triggered successfully`);
             } catch (err) {
               console.log(`Trigger failed:`, err?.error?.reason);
+              this.db.set(orderId, JSON.stringify(count + 1));
             }
           }
         }
